@@ -8,7 +8,7 @@ jobs:
 
     deploy:
 
-        name: Setup Gcloud Account
+        name: Push to GCloud
         runs-on: ubuntu-latest
         env:
           IMAGE_NAME: gcr.io/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_APP_NAME }}
