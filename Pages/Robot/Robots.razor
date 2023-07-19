@@ -1,0 +1,41 @@
+﻿@using CallAssistant.ViewModels.Robot
+@using CallAssistant.Helpers.RobotJS
+
+@page "/robots"
+
+@inject IJSRuntime _JSRuntime
+
+<h2 class="text-light">Robot JS Playground</h2>
+<hr class="bg-white" />
+
+<div class="d-flex flex-wrap justify-content-start">
+    @foreach (var process in robot.Processes)
+    {
+        <div class="border border-secondary m-2 p-2 card bg-success text-light d-flex flex-row" @onclick="(args)=>StartJob(process)">
+            <div class="p-2 align-middle"><span class="align-middle oi oi-media-play text-white align-middle"></span></div>
+            <div class="p-2 align-middle"><a> @process.Name</a></div>
+        </div>
+    }
+</div>
+
+
+@code {
+    private RobotManager robot { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        robot = new RobotManager(StateHasChanged);
+
+        await GetProcesses();
+    }
+
+    public async Task GetProcesses()
+    {
+        await _JSRuntime.GetProcesses(robot, "");
+    }
+
+    public async Task StartJob(BotProcess process)
+    {
+        await _JSRuntime.StartJob(robot);
+    }
+}

@@ -1,9 +1,11 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">CallAssistant</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <span class="oi oi-aperture text-white align-middle"></span>
+        </div>
+        <div class="p-2 text-white">
+            <a class="navbar-brand " href=""> Doc Robot</a>
+        </div>
     </div>
 </div>
 
@@ -15,13 +17,18 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="robots">
+                <span class="oi oi-calculator" aria-hidden="true"></span> Robots
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+            <NavLink class="nav-link" href="makeappointment">
+                <span class="oi oi-calendar" aria-hidden="true"></span> Make an Appointment
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="getprescriptions">
+                <span class="oi oi-contrast" aria-hidden="true"></span> Get Prescriptions
             </NavLink>
         </div>
     </nav>
