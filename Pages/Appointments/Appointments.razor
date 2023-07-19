@@ -1,0 +1,78 @@
+﻿@using CallAssistant.ViewModels.Appointments
+
+@page "/appointments"
+
+
+<h2 class="text-light">My Appointments</h2>
+<hr class="bg-white" />
+
+<div class="d-flex align-items-start flex-column" style="height: 400px;">
+    <div class="mb-auto">
+        @foreach (var appt in CurrentAppointmnets)
+        {
+            <div class="p-2 m-2 card bg-primary appointmentCard border border-secondary">
+                <div class="d-flex flex-row">
+                    <div class="p-2 align-middle"><span class="oi oi-calendar text-white"></span></div>
+                    <div class="p-2 bg-success">
+                        <b>@GetDateString(appt.StartTime)</b> at <b>@appt.StartTime.TimeOfDay</b>
+                    </div>
+                    <div class="p-2 align-middle">
+                        <b>@appt.Name</b> with <b>@appt.Provider</b>
+                    </div>
+                </div>
+
+
+            </div>
+        }
+    </div>
+    <div>
+        <h4 class="text-light">Make Appointment</h4>
+        <hr class="bg-white" />
+        <InputDate @bind-Value="NewAppointment.StartTime"></InputDate> at
+        <InputText type="time" @bind-Value="TimeProxy"></InputText>
+        with
+        <InputSelect @bind-Value="NewAppointment.Provider">
+            <option selected>John Smith</option>
+            <option>Emit Brown</option>
+        </InputSelect>
+        <button @onclick="@AddAppointment">Create</button>
+    </div>    
+</div>
+
+@code {
+    List<Appointment> CurrentAppointmnets = AppointmentSeed.SeedAppointmnets();
+
+    Appointment NewAppointment = new Appointment() { StartTime = DateTime.Now };
+
+    void AddAppointment()
+    {
+        CurrentAppointmnets.Add(this.NewAppointment);
+        this.NewAppointment = new Appointment() { StartTime = DateTime.Now };
+        StateHasChanged();
+    }
+
+    string TimeProxy
+    {
+        get => Time;
+        set {
+            Time = value;
+            TimeSpan.TryParse(value, out LocalTime);
+        }
+    }
+
+    string Time;
+
+    TimeSpan LocalTime = TimeSpan.FromHours(0);
+
+    string GetDateString(DateTime date)
+    {
+        if(date.Date == DateTime.Now.Date)
+        {
+            return "Today";
+        }
+        else
+        {
+            return date.ToShortDateString();
+        }
+    }
+}
