@@ -32,8 +32,8 @@
         <InputText type="time" @bind-Value="TimeProxy"></InputText>
         with
         <InputSelect @bind-Value="NewAppointment.Provider">
-            <option selected>John Smith</option>
-            <option>Emit Brown</option>
+            <option selected value="Dr. John Smith">John Smith</option>
+            <option value="Dr. Emit Brown">Emit Brown</option>
         </InputSelect>
         <button @onclick="@AddAppointment">Create</button>
     </div>    
@@ -46,6 +46,7 @@
 
     void AddAppointment()
     {
+        NewAppointment.StartTime = NewAppointment.StartTime.Date + LocalTime;
         CurrentAppointmnets.Add(this.NewAppointment);
         this.NewAppointment = new Appointment() { StartTime = DateTime.Now };
         StateHasChanged();
