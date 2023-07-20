@@ -19,6 +19,10 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
 }
+else
+{
+
+}
 
 
 app.UseStaticFiles();

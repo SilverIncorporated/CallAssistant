@@ -4,6 +4,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp.Authenticators;
+using CallAssistant.ViewModels.Config;
 
 namespace CallAssistant.ViewModels.Orchestrator
 {
@@ -11,9 +12,9 @@ namespace CallAssistant.ViewModels.Orchestrator
     {
         public OrchestratorAPI(IConfiguration config)
         {
-            appId = config.GetValue<string>("ORCH_APP_ID");
-            appSecret = config.GetValue<string>("ORCH_APP_SECRET");
-            orchUrl = config.GetValue<string>("ORCH_URL");
+            appId = ConfigRouter.GetVar("ORCH_APP_ID", config);
+            appSecret = ConfigRouter.GetVar("ORCH_APP_SECRET", config);
+            orchUrl = ConfigRouter.GetVar("ORCH_URL", config);
             Authenticate();
         }
         private string orchUrl { get; set; }
