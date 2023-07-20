@@ -10,6 +10,10 @@ window.WSInitialize = (dotnetHelper, url) => {
     ws.onopen = function (event) {
         console.log("Websocket connected. Sending to Blazor app...");
         console.log(event);
+        var event = {
+            event:"clearFunctions"
+        }
+        ws.send(JSON.stringify(event));
     };
     ws.onmessage = function (msg) {
         console.log(msg)
