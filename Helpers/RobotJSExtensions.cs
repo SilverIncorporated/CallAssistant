@@ -1,7 +1,7 @@
 ﻿using Microsoft.JSInterop;
 using CallAssistant.ViewModels.Robot;
 
-namespace CallAssistant.Helpers.RobotJS
+namespace CallAssistant.Helpers
 {
     static class RobotJSExtensions
     {
@@ -18,10 +18,10 @@ namespace CallAssistant.Helpers.RobotJS
             await jsRuntime.InvokeAsync<string>("GetNextFile", objectRef);
         }
 
-        public static async ValueTask StartJob(this IJSRuntime jsRuntime, object reference)
+        public static async ValueTask StartJob(this IJSRuntime jsRuntime, object reference, BotProcess process)
         {
             var objectRef = DotNetObjectReference.Create(reference);
-            await jsRuntime.InvokeAsync<string>("StartJob", objectRef);
+            await jsRuntime.InvokeAsync<string>("RunProcess", objectRef, process);
         }
 
         public static async ValueTask SaveTags(this IJSRuntime jsRuntime, object reference, string json, string name)

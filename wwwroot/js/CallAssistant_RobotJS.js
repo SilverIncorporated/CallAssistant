@@ -29,23 +29,3 @@ window.RunProcess = (dotNetHelper, process) => {
 
     }
 }
-
-
-window.GetFuelPrice = (dotNetHelper) => {
-
-    console.log('Starting process GetCurrentFuelPrice...');
-
-    let procs = window.processes;
-
-    if (procs.some(p => p.name === 'GetCurrentFuelPrice')) {
-
-        let proc = procs.filter(p => p.name === 'GetCurrentFuelPrice')[0];
-
-        proc.start().then(result => {
-            console.log(proc.name + ' finished successfully.');
-            dotNetHelper.invokeMethodAsync('onProcessFinish_GetFuelPrice', JSON.stringify(result));
-        });
-
-    }
-    
-}

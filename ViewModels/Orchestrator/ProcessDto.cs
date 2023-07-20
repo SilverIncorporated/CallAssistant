@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace CallAssistant.ViewModels.Orchestrator
@@ -17,5 +18,14 @@ namespace CallAssistant.ViewModels.Orchestrator
 
         [JsonProperty("key")]
         public string Key { get; set; }
+
+        [JsonProperty("inputArguments")]
+        public string InArguments { get; set; }
+
+        [JsonProperty("outputArguments")]
+        public string OutArguments { get; set; }
+
+        [JsonProperty("arguments")]
+        public ArgumentMetadataDto Arguments { get; set; }
     }
 }

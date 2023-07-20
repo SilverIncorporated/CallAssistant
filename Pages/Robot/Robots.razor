@@ -1,5 +1,5 @@
 ﻿@using CallAssistant.ViewModels.Robot
-@using CallAssistant.Helpers.RobotJS
+@using CallAssistant.Helpers
 
 @page "/robots"
 
@@ -36,6 +36,6 @@
 
     public async Task StartJob(BotProcess process)
     {
-        await _JSRuntime.StartJob(robot);
+        await _JSRuntime.StartJob(robot, process);
     }
 }
