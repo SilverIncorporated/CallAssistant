@@ -19,7 +19,7 @@ namespace CallAssistant.ViewModels.Orchestrator
         }
         private string orchUrl { get; set; }
         private string token { get; set; }
-        private DateTime tokenExpiration { get; set; }
+        private DateTime tokenExpiration { get; set; } = DateTime.Now.AddDays(-8);
         private string appId { get; set; }
         private string appSecret { get; set; }
 
@@ -27,32 +27,37 @@ namespace CallAssistant.ViewModels.Orchestrator
 
         private void Authenticate()
         {
-            var authOptions = new RestClientOptions("https://cloud.uipath.com/identity_/connect/token");
-
-            var authClient = new RestClient(authOptions);
-
-            var authRequest = new RestRequest();
-            authRequest.AddParameter("grant_type", "client_credentials");
-            authRequest.AddParameter("client_id", appId);
-            authRequest.AddParameter("client_secret", appSecret);
-            authRequest.AddParameter("scope", "OR.Execution.Read OR.Folders.Read");
-
-            var response = authClient.Post(authRequest);
-
-            var responseObject = JsonConvert.DeserializeObject<JObject>(response.Content);
-
-            token = responseObject.GetValue("access_token").ToString();
-
-            var options = new RestClientOptions(orchUrl)
+            if (DateTime.Now >  tokenExpiration)
             {
-                Authenticator = new OAuth2AuthorizationRequestHeaderAuthenticator(token, "Bearer")
-            };
+                var authOptions = new RestClientOptions("https://cloud.uipath.com/identity_/connect/token");
 
-            client = new RestClient(options);
+                var authClient = new RestClient(authOptions);
+
+                var authRequest = new RestRequest();
+                authRequest.AddParameter("grant_type", "client_credentials");
+                authRequest.AddParameter("client_id", appId);
+                authRequest.AddParameter("client_secret", appSecret);
+                authRequest.AddParameter("scope", "OR.Execution.Read OR.Folders.Read");
+
+                var response = authClient.Post(authRequest);
+
+                var responseObject = JsonConvert.DeserializeObject<JObject>(response.Content);
+
+                token = responseObject.GetValue("access_token").ToString();
+                tokenExpiration = DateTime.Now.AddSeconds(int.Parse(responseObject.GetValue("expires_in").ToString()));
+
+                var options = new RestClientOptions(orchUrl)
+                {
+                    Authenticator = new OAuth2AuthorizationRequestHeaderAuthenticator(token, "Bearer")
+                };
+
+                client = new RestClient(options);
+            }
         }
 
         public async Task<FolderDto[]> GetFolders(string fullyQualifiedName)
         {
+            Authenticate();
             var request = new RestRequest("/odata/Folders");
             request.AddQueryParameter("$filter", "startsWith(FullyQualifiedName,'" + fullyQualifiedName + "')");
             FolderDto[] folders = null;
@@ -69,6 +74,7 @@ namespace CallAssistant.ViewModels.Orchestrator
 
         public async Task<ProcessDto[]> GetProcesses(FolderDto folder)
         {
+            Authenticate();
             var request = new RestRequest("/odata/Releases");
             request.AddHeader("X-UIPATH-OrganizationUnitId", folder.Id);
             ProcessDto[] processes = null;
