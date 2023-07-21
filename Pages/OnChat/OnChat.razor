@@ -111,9 +111,8 @@
                                             else
                                             {
                                                 <div class="alert alert-danger p-2">
-                                                    <p>Not able to connect Assistant process to an Orchestrator process.</p>
-                                                    <p>If you choose to register this process with Doc Robot, then arguments will not be passed.</p>
-                                                    <button class="btn btn-outline-warning" @onclick="() => InstallRobot(proc.RJSProcess)">Register Anyway</button>
+                                                    <p>Not able to connect to an Orchestrator process.</p>
+                                                    <button class="btn btn-primary" @onclick="() => InstallRobot(proc.RJSProcess)">Register Anyway</button>
                                                 </div>
                                             }
                                         </div>
