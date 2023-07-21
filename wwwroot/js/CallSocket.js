@@ -3,19 +3,27 @@ console.log("Setting up socket...");
 let dotnethelper = null;
 let ws = null;
 let url = null;
+let firstOpen = true;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function Init(){
+window.SendInit = () => {
+    var event = {
+        event: "init"
+    }
+    ws.send(JSON.stringify(event));
+}
+
+function Setup(){
     ws = new WebSocket(`${url}/listener/callassistant`);
     ws.onopen = function (event) {
         console.log("Websocket connected. Sending to Blazor app...");
-        var event = {
-            event: "init"
+        if (firstOpen) {
+            window.SendInit();
         }
-        ws.send(JSON.stringify(event));
+        
 
         dotnethelper.invokeMethodAsync('onSocketConnect');
     };
@@ -38,7 +46,7 @@ function Init(){
 window.WSInitialize = (DotnetHelper, _url) => {
     dotnethelper = DotnetHelper;
     url = _url
-    Init();
+    Setup();
 }
 
 window.WSClose = () => {
@@ -77,7 +85,7 @@ window.RegisterFunction = (process) => {
     }
 
     if (ws.readyState == 2 || ws.readyState == 3 || !ws) {
-        Init()
+        Setup()
     }
     ws.send(JSON.stringify(event))
     
@@ -93,7 +101,7 @@ window.SendMessage = (message) => {
             content: message
         }
         if (ws.readyState == 2 || ws.readyState == 3 || !ws) {
-            Init()
+            Setup()
         }
         ws.send(JSON.stringify(event))
     } else {
@@ -120,7 +128,7 @@ window.FunctionComplete = (call) => {
         }
     }
     if (ws.readyState == 2 || ws.readyState == 3 || !ws) {
-        Init()
+        Setup()
     }
     ws.send(JSON.stringify(event));
 }
