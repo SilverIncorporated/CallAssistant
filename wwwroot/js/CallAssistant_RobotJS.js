@@ -27,12 +27,12 @@ window.RunProcess = (dotNetHelper, process, funcCall) => {
 
         if (Object.keys(args).length > 0) {
             proc.start(args).then(result => {
-                console.log(process.name + ' finished successfully.');
+                console.log(process.name + ' finished successfully with args.');
                 dotNetHelper.invokeMethodAsync('onProcessFinish', JSON.stringify(process), JSON.stringify(result), JSON.stringify(funcCall));
             });
         } else {
             proc.start().then(result => {
-                console.log(process.name + ' finished successfully.');
+                console.log(process.name + ' finished successfully without args.');
                 dotNetHelper.invokeMethodAsync('onProcessFinish', JSON.stringify(process), JSON.stringify(result), JSON.stringify(funcCall));
             });
         }
