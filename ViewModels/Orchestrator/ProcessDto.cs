@@ -27,5 +27,18 @@ namespace CallAssistant.ViewModels.Orchestrator
 
         [JsonProperty("arguments")]
         public ArgumentMetadataDto Arguments { get; set; }
+
+        [JsonIgnore]
+        public string NameClean
+        {
+            get
+            {
+                return Name
+                    .Replace(" ", "_")
+                    .Replace(".", "_")
+                    .Replace("?", "_")
+                    .Replace("|", "_");
+            }
+        } 
     }
 }

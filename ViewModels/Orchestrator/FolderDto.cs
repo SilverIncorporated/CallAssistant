@@ -16,5 +16,8 @@ namespace CallAssistant.ViewModels.Orchestrator
 
         [JsonProperty("id")]
         public string Id { get; set; }
+
+        [JsonProperty("fullyQualifiedName")]
+        public string FullyQualifiedName { get; set; }
     }
 }

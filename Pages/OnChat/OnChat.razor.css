@@ -1,0 +1,74 @@
+﻿body {
+}
+
+.fill {
+    min-height: 100%;
+    height: 100%;
+    border:double
+}
+
+.bg-purple {
+    /*    background: rgb(48,0,50);*/
+    background: #330033;
+}
+
+.bg-indigo {
+    background: #8884FF;
+}
+
+.bg-orange {
+    background: #ECC30B;
+}
+
+.bg-teal {
+    background: #9AD2CB;
+}
+
+.bg-azure {
+    background: #D6EFFF;
+}
+
+.bg-pink {
+    background: #A27E8E;
+}
+
+.bg-sugar {
+    background: #A77464;
+}
+
+.bg-gray {
+    background: rgb(74,74,74);
+}
+
+.bg-blue {
+    background: rgb(50,101,196);
+}
+
+.bg-red {
+    background: rgb(196,50,53);
+}
+
+.circle {
+    width:10px;
+    padding-top:5px;
+}
+
+.scroll-container {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.scroll-container::-webkit-scrollbar {
+    width: 8px;
+    background-color: #F5F5F5;
+}
+
+
+.scroll-container::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(104, 140, 240, 0.3);
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+    background-color: lightblue;
+    outline: 1px solid slategrey;
+}

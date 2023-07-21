@@ -7,12 +7,12 @@ window.GetProcesses = (dotNetHelper) => {
     robot.getProcesses().then(result => {
         console.log('Processes returned...');
         window.processes = result;
-        dotNetHelper.invokeMethodAsync('onGetProcessReturn', processes);
+        dotNetHelper.invokeMethodAsync('onGetProcessReturn',result)
     });
 
 }
 
-window.RunProcess = (dotNetHelper, process) => {
+window.RunProcess = (dotNetHelper, process, funcCall) => {
 
     console.log('Starting process ' + process.name + '...');
 
@@ -22,10 +22,37 @@ window.RunProcess = (dotNetHelper, process) => {
 
         let proc = procs.filter(p => p.id === process.id)[0];
 
-        proc.start().then(result => {
-            console.log(process.name + ' finished successfully.');
-            dotNetHelper.invokeMethodAsync('onProcessFinish', JSON.stringify(result));
-        });
+        let args = JSON.parse(funcCall.arguments);
 
+
+        if (Object.keys(args).length > 0) {
+            proc.start(args).then(result => {
+                console.log(process.name + ' finished successfully.');
+                dotNetHelper.invokeMethodAsync('onProcessFinish', JSON.stringify(process), JSON.stringify(result), JSON.stringify(funcCall));
+            });
+        } else {
+            proc.start().then(result => {
+                console.log(process.name + ' finished successfully.');
+                dotNetHelper.invokeMethodAsync('onProcessFinish', JSON.stringify(process), JSON.stringify(result), JSON.stringify(funcCall));
+            });
+        }
+
+        
+
+    }
+}
+
+window.InstallProcess = (dotNetHelper, process) => {
+    console.log('Installing process ' + process.name + '...');
+
+    let procs = window.processes;
+
+    if (procs.some(p => p.id === process.id)) {
+        let proc = procs.filter(p => p.id === process.id)[0];
+
+        robot.installProcess(proc.id).then(result => {
+            
+            dotNetHelper.invokeMethodAsync('onProcessInstall', JSON.stringify(proc), JSON.stringify(result.inputArgumentsSchema))
+        });
     }
 }

@@ -1,0 +1,309 @@
+﻿@page "/onchat"
+
+@using CallAssistant.Helpers
+@using CallAssistant.ViewModels.Config
+@using CallAssistant.ViewModels.Orchestrator
+@using CallAssistant.ViewModels.Robot
+
+@inject IConfiguration config
+@inject IJSRuntime runtime
+@inject IOrchestratorAPI orchestratorAPI
+
+<div class="d-flex p-0">
+    <div class="container-fluid h-100">
+        <div class="row h-100">
+            <div class="bg-purple d-flex flex-column vh-100" style="max-height: 100vh">
+                <div class="w-100 m-2 p-2 alert alert-success">
+                    Connected with Doc Robot on Chat!
+                </div>
+                <div class="justify-content-center flex-grow-1 overflow-auto scroll-container flex-column-reverse" @ref=scrollportRef>
+                        @if(socket != null)
+                        {
+                            @foreach (var transcription in socket.Transcriptions.Where(t => t.Role == "assistant" || t.Role == "user"))
+                            {
+                                @if (transcription.Role == "user")
+                                {
+                                    <div class="d-flex flex-row align-items-center">
+                                        <div class="p-2 badge bg-primary">
+                                            <span class="oi oi-person text-dark" aria-hidden="true"></span>
+                                        </div>
+                                        <div class="text-secondary m-1"></div>
+                                        <div class="alert alert-primary mt-3 p-1">@transcription.Content</div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="d-flex flex-row-reverse align-items-center mt-2">
+                                        <div class="p-2 badge bg-secondary">
+                                            <span class="oi oi-aperture text-light" aria-hidden="true"></span>
+                                        </div>
+                                        <div class="text-secondary m-1"></div>
+                                        <div class="alert alert-secondary mt-3 p-1">@transcription.Content</div>
+                                    </div>
+                                }
+                            }
+                        }
+                </div>
+                <div class="row justify-content-center">
+                    <div class="text-white p-2">
+                        <div class="card d-flex flex-row bg-pink align-items-center">
+                            <div class="flex-grow-1 p-2 align-items-center">
+                                <input type="text" class="w-100 form-control" placeholder="Type a message..." @bind-value="@MessageInput" @bind-value:event="oninput" @onkeypress="@Enter"></input>
+                            </div>
+                            <div class="m-2">
+                                <button class="btn btn-light" @onclick="() => SendMessage()">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid col-4 bg-purple h-100">
+        <div class="row h-100">
+            <div class="bg-purple d-flex flex-column vh-100" style="max-height: 100vh">
+                <div class="m-3 p-2 bg-light h-50 scroll-container h-50 card d-flex flex-column" @ref=procsPortref>
+                    @if (folder != null)
+                    {
+                        <div class="text-dark h-25">Your UiPath Automations:</div>
+                    }
+                    @if (BotProcesses != null)
+                    {
+                        <div class="accordion" id="botAccordion">
+                            @foreach(var proc in BotProcesses.OrderByDescending(bp => bp.Synched))
+                            {
+                                <div class="accordion-item">
+                                    <h4 class="accordion-header" id="heading@(proc.Id)">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(proc.Id)" aria-expanded="false" aria-controls="collapse@(proc.Id)">
+                                            <div class="container-fluid">
+                                                <h6>@proc.Name</h6><span class="badge @(proc.Synched?"bg-success":"bg-danger")" data-toggle="tooltip" data-placement="top" title=@(proc.Synched?"Connected to Assistant and Orchestrator. Registered to Doc Robot.":"Not connected to Orchestrator. Can still register with Doc Robot, but will not be able to read arguments.")>@(proc.Synched ? "Connected" : "Not Connected.")</span>
+                                            </div>
+                                        </button>
+                                    </h4>
+                                    <div id="collapse@(proc.Id)" class="accordion-collapse collapse" aria-labelledby="heading@(proc.Id)" data-bs-parent="#botAccordion">
+                                        <div class="accordion-body">
+                                            @if(proc.Synched)
+                                            {
+                                                <div class="card bg-light p-1">
+                                                    @if(proc.OrchProcess.Arguments != null)
+                                                    {
+                                                        <table class="table">
+                                                            <tr>
+                                                                <th scope="col">Argument</th>
+                                                                <th scope="col">Type</th>
+                                                                <th scope="col">IO</th>
+                                                            </tr>
+                                                            @foreach (var arg in proc.OrchProcess.Arguments.InArguments)
+                                                                {
+                                                                    <tr>
+                                                                        <td scope="col">@arg.Name</td>
+                                                                        <td scope="col">@arg.Type</td>
+                                                                        <td scope="col">In</td>
+                                                                    </tr>
+                                                                }
+
+                                                        </table>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="alert alert-danger p-2">
+                                                    <p>Not able to connect Assistant process to an Orchestrator process.</p>
+                                                    <p>If you choose to register this process with Doc Robot, then arguments will not be passed.</p>
+                                                    <button class="btn btn-outline-warning" @onclick="() => InstallRobot(proc.RJSProcess)">Register Anyway</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="m-3 p-2 bg-light h-50 scroll-container overflow-auto h-50 card">
+                    <div class="text-dark">Chat Function Calls:</div>
+                    <div class="accordion" id="functionAccordion">
+                        @foreach (var call in FunctionCalls)
+                        {
+                            <div class="accordion-item">
+                                <h4 class="accordion-header" id="heading@(call.Id)">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(call.Id)" aria-expanded="false" aria-controls="collapse@(call.Id)">
+                                        <div class="container-fluid">
+                                            <h6>@call.Name</h6>
+                                            @if (string.IsNullOrWhiteSpace(call.Result))
+                                            {
+                                                <span class="badge bg-warning">Running...</span>
+                                            }
+                                            else if (call.ExecutingProcess != null)
+                                            {
+                                                <span class="badge bg-success">Completed!</span>
+                                            }
+                                        </div>
+                                    </button>
+                                </h4>
+                                <div id="collapse@(call.Id)" class="accordion-collapse collapse" aria-labelledby="heading@(call.Id)" data-bs-parent="#accordionExample">
+                                    <div class="accordion-body text-dark">
+                                        @if (!string.IsNullOrWhiteSpace(call.Result))
+                                        {
+                                            <h6>Result:</h6>
+                                            <div class="alert alert-primary p-2">
+                                                @call.Result
+                                            </div>
+                                        }
+                                        <h6>Input:</h6>
+                                        <div class="alert alert-warning p-2">
+                                            @call.Arguments
+                                        </div>
+                                                                              
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@code{
+    CallSocketHelper socket { get; set; }
+    FolderDto folder { get; set; }
+    RobotJsHelper robot { get; set; }
+    IEnumerable<ProcessDto> OrchProcesses { get; set; }
+    private IEnumerable<FunctionCall> FunctionCalls = new List<FunctionCall>();
+    private IEnumerable<CombinedProcess> BotProcesses { get; set; }
+    private ElementReference scrollportRef;
+    private ElementReference procsPortref;
+    string MessageInput { get; set; }
+    bool HideNotification = false;
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            socket = new CallSocketHelper(runtime, ConfigRouter.GetVar("CALL_SERVER_URL", config), new Action[] { StateHasChanged, ScrollToEnd }, FunctionCall);
+            robot = new RobotJsHelper(runtime, StateHasChanged);
+            var folders = await orchestratorAPI.GetFolders("HyperHack");
+            folder = folders.First();
+            //await runtime.SweetAlert(true, "Orchestrator connected to " + folder.FullyQualifiedName + "!");
+            //await runtime.Toastr(true, "Orchestrator connected to " + folder.FullyQualifiedName + "!");
+            socket.SocketConnectCallback = OnSocketStart;
+            await socket.StartSocket();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    async void OnSocketStart()
+    {
+        OrchProcesses = await orchestratorAPI.GetProcesses(folder);
+        await robot.GetProcesses(GetProcessesReturn);
+        StateHasChanged();
+    }
+    async void GetProcessesReturn()
+    {
+        BotProcesses = robot.AvailableProcesses.Select(bp => new CombinedProcess(
+                bp, OrchProcesses.FirstOrDefault(op => op.Name == bp.Name)
+            )).ToList();
+        foreach (var proc in BotProcesses.Where(bp => bp.Synched))
+        {
+            await socket.RegisterFunction(proc.OrchProcess);
+        }
+        StateHasChanged();
+    }
+    async void SendMessage()
+    {
+        await socket.SendMessage(MessageInput);
+        MessageInput = "";
+        StateHasChanged();
+    }
+    async void InstallRobot(BotProcess proc)
+    {
+        runtime.LogMessage("Installing process " + proc.Name + "...");
+        await robot.InstallProcess(proc, RobotInstalled);
+    }
+    async void RobotInstalled(BotProcess proc, string argsJson)
+    {
+        runtime.LogMessage("Process installed.");
+        var cproc = BotProcesses.FirstOrDefault(cp => cp.RJSProcess.Id == proc.Id);
+
+        ScrollToTop();
+
+        if(cproc != null)
+        {
+            cproc.OrchProcess = new ProcessDto()
+            {
+                Arguments = new ArgumentMetadataDto() { Input = argsJson },
+                Name = proc.Name,
+                Key = proc.Id.ToString(),
+                Description = proc.Name
+            };
+            await socket.RegisterFunction(cproc.OrchProcess);
+            StateHasChanged();
+        }
+    }
+    async void ProcessFinished(BotProcess proc, string result, FunctionCall callObj)
+    {
+        var call = FunctionCalls.First(c => c.Id == callObj.Id);
+        call.Result = result;
+
+        socket.FunctionCompletion(call);
+
+        StateHasChanged();
+    }
+    async Task StartProcess(FunctionCall call)
+    {
+        var proc = robot.AvailableProcesses.Where(ap => ap.Name == call.Name || ap.NameClean == call.Name).FirstOrDefault();
+
+        if (proc == null)
+        {
+            await runtime.Toastr(false, "Failed to find process for function call: " + call.Name);
+            return;
+        }
+
+        call.ExecutingProcess = proc;
+        StateHasChanged();
+        await robot.StartProcess(call, ProcessFinished);
+    }
+    async void FunctionCall(FunctionCall funcCall)
+    {
+        var fc = FunctionCalls.ToList();
+        fc.Insert(0,funcCall);
+        FunctionCalls = fc;
+        StateHasChanged();
+
+        await StartProcess(funcCall);
+    }
+    public async void Enter(KeyboardEventArgs e)
+    {
+        if ((e.Code == "Enter" || e.Code == "NumpadEnter") && !string.IsNullOrWhiteSpace(MessageInput))
+        {
+            SendMessage();
+        }
+        else if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            try { MessageInput = socket.Transcriptions.Where(t => t.Role == "user").Last().Content; }
+            catch { }
+        }
+
+
+        StateHasChanged();
+    }
+    public void ScrollToEnd()
+    {
+        runtime.InvokeVoidAsync("scrollToEnd", new object[] { scrollportRef });
+    }
+    public void ScrollToTop()
+    {
+        runtime.InvokeVoidAsync("scrollToTop", new object[] { procsPortref });
+    }
+}

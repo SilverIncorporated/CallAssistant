@@ -3,25 +3,29 @@ console.log("Setting up socket...");
 let dotnethelper = null;
 let ws = null;
 
-window.WSInitialize = (dotnetHelper, url) => {
-    dotnethelper = dotnetHelper;
+window.WSInitialize = (DotnetHelper, url) => {
+    dotnethelper = DotnetHelper;
     ws = new WebSocket(`${url}/listener/callassistant`);
 
     ws.onopen = function (event) {
         console.log("Websocket connected. Sending to Blazor app...");
-        console.log(event);
         var event = {
-            event:"clearFunctions"
+            event: "init"
         }
         ws.send(JSON.stringify(event));
+
+        dotnethelper.invokeMethodAsync('onSocketConnect');
     };
-    ws.onmessage = function (msg) {
-        console.log(msg)
+    ws.onmessage = function(event) {
 
-        if (msg.event === 'transcription') {
+        var eventData = JSON.parse(event.data)
 
-        } else if (msg.event === 'callFunction') {
-
+        if (eventData.event === 'transcription') {
+            console.log('Transcription received...');
+            dotnethelper.invokeMethodAsync('onTranscription', JSON.stringify(eventData.content))
+        } else if (eventData.event === 'callFunction') {
+            console.log('Function call received...');
+            dotnethelper.invokeMethodAsync('onFunctionCall', JSON.stringify(eventData.content))
         }
     }
 }
@@ -49,7 +53,7 @@ window.RegisterFunction = (process) => {
     })
     var required = reqd.map((a) => a.name)
     var func = {
-        name: process.name,
+        name: process.nameClean,
         description: process.description,
         parameters: {
             type: "object",
@@ -67,3 +71,38 @@ window.RegisterFunction = (process) => {
     
 }
 
+window.SendMessage = (message) => {
+    console.log(`Sending message: '${message}'`);
+
+    if (ws) {
+        var event = {
+            event: "echo",
+            content: message
+        }
+        ws.send(JSON.stringify(event))
+    } else {
+        console.log("Websocket not connected...")
+    }
+}
+
+window.FunctionComplete = (call) => {
+    console.log(`Function complete: '${call}'`);
+
+    console.log(call);
+
+    var result = JSON.parse(call.result);
+
+    if (Object.keys(result) === 0) {
+        call.result = '{"result":"success"}'
+    }
+
+    var event = {
+        event: 'functionReturn',
+        content: {
+            name: call.name,
+            result: call.result
+        }
+    }
+
+    ws.send(JSON.stringify(event));
+}

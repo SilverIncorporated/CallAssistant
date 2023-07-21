@@ -3,6 +3,7 @@
 @using System.Linq
 @using CallAssistant.Helpers
 @using CallAssistant.ViewModels.Config
+@using CallAssistant.ViewModels.Robot
 
 @page "/orchestrator"
 
@@ -11,10 +12,13 @@
 @inject IConfiguration config
 
 
-<h2 class="text-light">Robot JS Playground</h2>
+<h2 class="text-light">Orchestrator Connection</h2>
 <hr class="bg-white" />
 
 <div class="d-flex flex-wrap justify-content-start">
+
+    <InputText @bind-Value="FolderFilter" @onkeypress="@Enter"></InputText>
+
     @if(Folders != null)
     {
         @foreach (var folder in Folders)
@@ -70,13 +74,29 @@
 
     CallSocketHelper SocketHelper { get; set; }
 
+    string FolderFilter { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        SocketHelper = new CallSocketHelper(_jsRuntime, ConfigRouter.GetVar("CALL_SERVER_URL", config));
-        await SocketHelper.StartSocket();
-        Folders = await _OrchestratorAPI.GetFolders("Development");
-        StateHasChanged();
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+            SocketHelper = new CallSocketHelper(_jsRuntime, ConfigRouter.GetVar("CALL_SERVER_URL", config), new Action[]{StateHasChanged}, functionCall);
+            await SocketHelper.StartSocket();
+            Folders = await _OrchestratorAPI.GetFolders(FolderFilter);
+            StateHasChanged();
+        }
+
+    }
+
+    async void functionCall(FunctionCall fc)
+    {
+
     }
 
     async void GetProcesses(FolderDto folder)
@@ -90,5 +110,18 @@
         selectedProcess = process;
         StateHasChanged();
         await SocketHelper.RegisterFunction(process);
+    }
+
+    public async void Enter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            Folders = await _OrchestratorAPI.GetFolders(FolderFilter);
+            StateHasChanged();
+        }
+        else
+        {
+            
+        }
     }
 }
