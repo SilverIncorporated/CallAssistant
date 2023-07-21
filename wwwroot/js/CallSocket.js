@@ -2,11 +2,14 @@ console.log("Setting up socket...");
 
 let dotnethelper = null;
 let ws = null;
+let url = null;
 
-window.WSInitialize = (DotnetHelper, url) => {
-    dotnethelper = DotnetHelper;
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function Init(){
     ws = new WebSocket(`${url}/listener/callassistant`);
-
     ws.onopen = function (event) {
         console.log("Websocket connected. Sending to Blazor app...");
         var event = {
@@ -16,7 +19,7 @@ window.WSInitialize = (DotnetHelper, url) => {
 
         dotnethelper.invokeMethodAsync('onSocketConnect');
     };
-    ws.onmessage = function(event) {
+    ws.onmessage = function (event) {
 
         var eventData = JSON.parse(event.data)
 
@@ -28,6 +31,14 @@ window.WSInitialize = (DotnetHelper, url) => {
             dotnethelper.invokeMethodAsync('onFunctionCall', JSON.stringify(eventData.content))
         }
     }
+
+    sleep(3000);
+}
+
+window.WSInitialize = (DotnetHelper, _url) => {
+    dotnethelper = DotnetHelper;
+    url = _url
+    Init();
 }
 
 window.WSClose = () => {
@@ -35,7 +46,6 @@ window.WSClose = () => {
         ws.close();
         ws = null;
     }
-    
 }
 
 window.RegisterFunction = (process) => {
@@ -65,9 +75,12 @@ window.RegisterFunction = (process) => {
         event: "registerFunction",
         content:func
     }
-    if (ws) {
-        ws.send(JSON.stringify(event))
+
+    if (ws.readyState == 2 || ws.readyState == 3 || !ws) {
+        Init()
     }
+    ws.send(JSON.stringify(event))
+    
     
 }
 
@@ -78,6 +91,9 @@ window.SendMessage = (message) => {
         var event = {
             event: "echo",
             content: message
+        }
+        if (ws.readyState == 2 || ws.readyState == 3 || !ws) {
+            Init()
         }
         ws.send(JSON.stringify(event))
     } else {
@@ -103,6 +119,8 @@ window.FunctionComplete = (call) => {
             result: call.result
         }
     }
-
+    if (ws.readyState == 2 || ws.readyState == 3 || !ws) {
+        Init()
+    }
     ws.send(JSON.stringify(event));
 }
